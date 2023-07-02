@@ -2,9 +2,8 @@
 import random
 import time
 
-import wx
-
 from simplecanvas import run_function
+
 
 def func(canvas):
     for i in range(canvas.height):
