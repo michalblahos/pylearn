@@ -85,9 +85,12 @@ class SimpleCanvasFrame(wx.Frame):
         """
         Draw a point on the bitmap.
         """
-        self.log.Insert("[{} {}] => {}".format(x, y, color), 0)
-        self.log.EnsureVisible(0)
+        self.do_log("[{} {}] => {}".format(x, y, color))
         self.data[y, x, :] = self.COLORS[color % self.MAX_COLOR]
+
+    def do_log(self, t):
+        wx.CallAfter(self.log.Insert, t, 0)
+        wx.CallAfter(self.log.EnsureVisible, 0)
 
     def __setitem__(self, coords, color):
         self.draw_point(coords[0], coords[1], color)
