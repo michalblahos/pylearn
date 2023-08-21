@@ -1,41 +1,47 @@
 import random
 
-import numpy as np
 import wx
-from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
 
-class FLCFrame(wx.Frame):
-    """
-    A simple frame that contains just an owner-drawn area.
-    """
-    def __init__(self, parent, nodes, edges, title="Canvas"):
-        super().__init__(parent, title=title)
-        h = wx.BoxSizer(wx.HORIZONTAL)
-        self.nc = NavCanvas.NavCanvas(self, Debug = 0, BackgroundColor = "WHITE")
-        h.Add(self.nc, flag=wx.EXPAND, proportion=2)
-        self.SetSizer(h)
+class PictureFrame(wx.Frame):
+    def __init__(self, parent):
+        super().__init__(parent, title="Picture Frame")
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.bmp = None
 
-        self.nodes = nodes
-        self.edges = edges
+    def prepare_image(self, nodes, edges):
+        bmp = wx.Bitmap(1100, 1100)
+        
+        memdc = wx.MemoryDC(bmp)
+        memdc.Clear()
+        memdc.SetPen(wx.RED_PEN)
+        memdc.SetBrush(wx.Brush("BLUE"))
+        memdc.SetTextForeground(wx.GREEN)
 
-        self.draw_map()
+        for (x, y) in nodes:
+            memdc.DrawCircle(x+50, y+50, 10)
+        for (i, j, w) in edges:
+            memdc.DrawLine(nodes[i][0]+50, nodes[i][1]+50, nodes[j][0]+50, nodes[j][1]+50)
+            tx = nodes[i][0] + (nodes[j][0] - nodes[i][0]) / 2
+            ty = nodes[i][1] + (nodes[j][1] - nodes[i][1]) / 2
+            memdc.DrawText(str(w), tx+50, ty+50)
 
-    def draw_map(self):
-        self.nc.Canvas.InitAll()
-        for (x, y) in self.nodes:
-            self.nc.Canvas.AddCircle((x, y), Diameter=10, LineColor="RED", FillColor="BLACK")
-        for (i, j, w) in self.edges:
-            self.nc.Canvas.AddLine([self.nodes[i], self.nodes[j]], LineWidth=1, LineColor="BLACK")
-            tx = self.nodes[i][0] + (self.nodes[j][0] - self.nodes[i][0]) / 2
-            ty = self.nodes[i][1] + (self.nodes[j][1] - self.nodes[i][1]) / 2
-            self.nc.Canvas.AddText(str(w), (tx, ty), Position="tc", Size=20, Color="BLACK")
-        self.nc.Canvas.ZoomToBB()
+        self.bmp = bmp
+        self.Refresh()
+
+
+    def on_paint(self, evt):
+        evt.Skip()
+        dc = wx.PaintDC(self)
+
+        if self.bmp:
+            dc.DrawBitmap(self.bmp, wx.Point(0, 0))
+
 
 
 if "__main__" == __name__:
-    nodes = sorted(set([(random.randrange(0, 100)*10, random.randrange(0, 100)*10) for i in range(20)]))
+    nodes = sorted(set([(random.randrange(0, 100)*10, random.randrange(0, 100)*10) for i in range(15)]))
     edges = []
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
@@ -43,7 +49,8 @@ if "__main__" == __name__:
                 edges.append((i, j, random.randrange(10, 1000)))
 
     app = wx.App()
-    frame = FLCFrame(None, nodes, edges, title="Bleee Bleee")
-    frame.Show()
+    frame = PictureFrame(None)
+    frame.prepare_image(nodes, edges)
     frame.Maximize()
+    frame.Show()
     app.MainLoop()
